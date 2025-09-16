@@ -31,11 +31,10 @@
     <button id="sendBtn">Save</button>
     <pre id="result"></pre>
   </div>
+
   <script>
-    // replace with the Current web app URL from your Apps Script deployment
-    const SCRIPT_URL =
-      'https://script.google.com/macros/s/AKfycby1oiu6vgYHloGwyqqBDF1ju-lUQcQPSPUvjKVjl9mIjJpNGtENc1MymM_3rhgGEpkgtw/exec';
-    
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1oiu6vgYHloGwyqqBDF1ju-lUQcQPSPUvjKVjl9mIjJpNGtENc1MymM_3rhgGEpkgtw/exec';
+
     liff.init({ liffId: '2007795446-wMNzZ6gZ' })
       .then(async () => {
         console.log('LIFF init OK');
@@ -47,84 +46,60 @@
           alert('getProfile error: ' + e.message);
           return;
         }
-        
+
         const uid = profile.userId;
         const sendBtn = document.getElementById('sendBtn');
-        const resultElement = document.getElementById('result');
-        
+        const resultEl = document.getElementById('result');
+
         sendBtn.addEventListener('click', async () => {
           const name = document.getElementById('realName').value.trim();
           if (!name) {
             alert('Enter a name first');
             return;
           }
-          
-          // Disable button and show loading
+
           sendBtn.disabled = true;
           sendBtn.textContent = 'Saving...';
-          resultElement.textContent = 'Sending data to server...';
-          resultElement.className = '';
-          
+          resultEl.textContent = 'Sending data to server...';
+          resultEl.className = '';
+
           try {
-            console.log('Sending data:', { userId: uid, realName: name });
-            
+            // simple POST without headers (avoids CORS preflight)
             const res = await fetch(SCRIPT_URL, {
               method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
               body: JSON.stringify({ userId: uid, realName: name })
             });
-            
-            console.log('Response status:', res.status);
-            console.log('Response ok:', res.ok);
-            
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            }
-            
+
             const text = await res.text();
-            console.log('Response text:', text);
-            
-            const data = JSON.parse(text || '{}');
-            console.log('Parsed data:', data);
-            
-            if (data.status === 'error') {
-              throw new Error(data.message || 'Unknown server error');
-            }
-            
-            resultElement.textContent = 'Success: ' + JSON.stringify(data, null, 2);
-            resultElement.className = 'success';
-            
-            // Send LINE message
+            console.log('Raw response:', text);
+
+            let data;
+            try { data = JSON.parse(text); }
+            catch { data = { status: 'error', message: 'Invalid JSON', raw: text }; }
+
+            if (data.status === 'error') throw new Error(data.message || 'Server error');
+
+            resultEl.textContent = 'Success: ' + JSON.stringify(data, null, 2);
+            resultEl.className = 'success';
+
             await liff.sendMessages([
               { type: 'text', text: `Thanks ${name}, your name is saved.` }
             ]);
-            
-            // Close LIFF window after a short delay
-            setTimeout(() => {
-              liff.closeWindow();
-            }, 1500);
-            
+
+            setTimeout(() => liff.closeWindow(), 1500);
           } catch (err) {
-            console.error('Error:', err);
-            resultElement.textContent = 'Error: ' + err.message;
-            resultElement.className = 'error';
+            console.error(err);
+            resultEl.textContent = 'Error: ' + err.message;
+            resultEl.className = 'error';
           } finally {
-            // Re-enable button
             sendBtn.disabled = false;
             sendBtn.textContent = 'Save';
           }
         });
-        
-        // Allow Enter key to submit
-        document.getElementById('realName').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            sendBtn.click();
-          }
+
+        document.getElementById('realName').addEventListener('keypress', e => {
+          if (e.key === 'Enter') sendBtn.click();
         });
-        
       })
       .catch(err => {
         console.error('LIFF init error:', err);
