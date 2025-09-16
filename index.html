@@ -1,32 +1,58 @@
-<script>
-liff
-  .init({ liffId: '2007795446-oDnMBb5B' })
-  .then(async () => {
-    alert('init ok');
-    const profile = await liff.getProfile().catch(err => alert('getProfile error: ' + err.message));
-    if (!profile) return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Set Real Name</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    input { padding: 0.5rem; width: 250px; }
+    button { padding: 0.5rem 1rem; margin-left: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h3>Please enter your real name</h3>
+  <input id="realName" placeholder="Type your name">
+  <button id="sendBtn">Save</button>
 
-    alert('profile ok: ' + profile.displayName);
-    const uid = profile.userId;
+  <script>
+    liff
+      .init({ liffId: '2007795446-oDnMBb5B' })   <!-- put your real LIFF ID -->
+      .then(async () => {
+        alert('init ok');
+        const profile = await liff.getProfile()
+          .catch(err => alert('getProfile error: ' + err.message));
+        if (!profile) return;
 
-    document.getElementById('sendBtn').addEventListener('click', async () => {
-      alert('button clicked');
-      const name = document.getElementById('realName').value.trim();
-      if (!name) return alert('Enter a name');
+        alert('profile ok: ' + profile.displayName);
+        const uid = profile.userId;
 
-      try {
-        await fetch('https://script.google.com/macros/s/AKfycbynanz1oklVlKmxXj-4y5mVWe7NrmT9qWFZacU5s_XbqPid6-VbZo98exFl-v6xdgtngg/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: uid, realName: name })
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+          alert('button clicked');
+          const name = document.getElementById('realName').value.trim();
+          if (!name) return alert('Enter a name');
+
+          try {
+            await fetch(
+              'https://script.google.com/macros/s/AKfycbynanz1oklVlKmxXj-4y5mVWe7NrmT9qWFZacU5s_XbqPid6-VbZo98exFl-v6xdgtngg/exec',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: uid, realName: name })
+              }
+            );
+
+            await liff.sendMessages([
+              { type: 'text', text: `Thanks ${name}, your name is saved.` }
+            ]);
+
+            liff.closeWindow();
+          } catch (e) {
+            alert('send error: ' + e.message);
+          }
         });
-
-        await liff.sendMessages([{ type: 'text', text: `Thanks ${name}` }]);
-        liff.closeWindow();
-      } catch(e) {
-        alert('send error: ' + e.message);
-      }
-    });
-  })
-  .catch(e => alert('init error: ' + e.message));
-</script>
+      })
+      .catch(e => alert('init error: ' + e.message));
+  </script>
+</body>
+</html>
