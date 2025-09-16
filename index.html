@@ -18,22 +18,24 @@
     h3 { font-size: 2rem; margin-bottom: 1.5rem; }
     input { padding: 1rem; width: 350px; font-size: 1.2rem; }
     button { padding: 1rem 2rem; font-size: 1.2rem; margin-left: .5rem; cursor: pointer; }
-    pre { margin-top: 1rem; text-align: left; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    pre { margin-top: 1rem; text-align: left; max-width: 400px; word-wrap: break-word; }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
   <div class="wrapper">
-    <h3>Please enter your real name [v33]</h3>
+    <h3>Please enter your real name [v34]</h3>
     <input id="realName" placeholder="Type your name">
     <button id="sendBtn">Save</button>
     <pre id="result"></pre>
   </div>
-
   <script>
     // replace with the Current web app URL from your Apps Script deployment
     const SCRIPT_URL =
-      'https://script.google.com/macros/s/AKfycbydnr7HnlpiSwIPWmYCYn_-9fV4RV10YOkcjW_KmJDngbmanVVuO6cybjmjlzpTie2AHg/exec';
-
+      'https://script.google.com/macros/s/AKfycbwF_qpx6O8TIrgGNXrKhTB0DoksensptTN0xCFeeVgKwbXFVfFnW7OGgk1B0iq_KEYOfQ/exec';
+    
     liff.init({ liffId: '2007795446-oDnMBb5B' })
       .then(async () => {
         console.log('LIFF init OK');
@@ -45,42 +47,89 @@
           alert('getProfile error: ' + e.message);
           return;
         }
-
+        
         const uid = profile.userId;
-        document.getElementById('sendBtn').addEventListener('click', async () => {
+        const sendBtn = document.getElementById('sendBtn');
+        const resultElement = document.getElementById('result');
+        
+        sendBtn.addEventListener('click', async () => {
           const name = document.getElementById('realName').value.trim();
           if (!name) {
             alert('Enter a name first');
             return;
           }
-
-          document.getElementById('result').textContent = 'Sending...';
+          
+          // Disable button and show loading
+          sendBtn.disabled = true;
+          sendBtn.textContent = 'Saving...';
+          resultElement.textContent = 'Sending data to server...';
+          resultElement.className = '';
+          
           try {
+            console.log('Sending data:', { userId: uid, realName: name });
+            
             const res = await fetch(SCRIPT_URL, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
               body: JSON.stringify({ userId: uid, realName: name })
             });
-
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-
-            const text = await res.text();        // Apps Script returns text
+            
+            console.log('Response status:', res.status);
+            console.log('Response ok:', res.ok);
+            
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            
+            const text = await res.text();
+            console.log('Response text:', text);
+            
             const data = JSON.parse(text || '{}');
-
-            document.getElementById('result').textContent =
-              'Reply: ' + JSON.stringify(data);
-
+            console.log('Parsed data:', data);
+            
+            if (data.status === 'error') {
+              throw new Error(data.message || 'Unknown server error');
+            }
+            
+            resultElement.textContent = 'Success: ' + JSON.stringify(data, null, 2);
+            resultElement.className = 'success';
+            
+            // Send LINE message
             await liff.sendMessages([
               { type: 'text', text: `Thanks ${name}, your name is saved.` }
             ]);
-            liff.closeWindow();
+            
+            // Close LIFF window after a short delay
+            setTimeout(() => {
+              liff.closeWindow();
+            }, 1500);
+            
           } catch (err) {
-            document.getElementById('result').textContent =
-              'Error: ' + err.message;
+            console.error('Error:', err);
+            resultElement.textContent = 'Error: ' + err.message;
+            resultElement.className = 'error';
+          } finally {
+            // Re-enable button
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Save';
           }
         });
+        
+        // Allow Enter key to submit
+        document.getElementById('realName').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            sendBtn.click();
+          }
+        });
+        
       })
-      .catch(err => alert('LIFF init failed: ' + err.message));
+      .catch(err => {
+        console.error('LIFF init error:', err);
+        alert('LIFF init failed: ' + err.message);
+      });
   </script>
 </body>
 </html>
