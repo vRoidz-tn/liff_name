@@ -36,19 +36,23 @@
 </head>
 <body>
   <div class="wrapper">
-    <h3>Please enter your real name</h3>
+    <h3>Please enter your real name [v33]</h3>
     <input id="realName" placeholder="Type your name">
     <button id="sendBtn">Save</button>
   </div>
 
   <script>
+    const SCRIPT_URL =
+      'https://script.google.com/macros/s/AKfycbztj4RXoGT8QW46v1KbAEVtGFAktu9558coxPHQsGT5WpDl6_rliWoqMV7krBy1M6ezkw/exec';
+
     liff
-      .init({ liffId: '2007795446-oDnMBb5B' })   // your real LIFF ID
+      .init({ liffId: '2007795446-oDnMBb5B' }) // your LIFF ID
       .then(async () => {
         alert('LIFF init OK');
 
-        const profile = await liff.getProfile()
-          .catch(err => alert('getProfile error: ' + err.message));
+        const profile = await liff
+          .getProfile()
+          .catch((err) => alert('getProfile error: ' + err.message));
         if (!profile) return;
 
         alert('Profile OK: ' + profile.displayName);
@@ -60,20 +64,15 @@
           if (!name) return alert('Enter a name');
 
           try {
-            console.log('starting fetch');
-            const res = await fetch(
-              'https://script.google.com/macros/s/AKfycbztj4RXoGT8QW46v1KbAEVtGFAktu9558coxPHQsGT5WpDl6_rliWoqMV7krBy1M6ezkw/exec',
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: uid, realName: name })
-              }
-            );
-            console.log('fetch done', res);
-            if (!res.ok) {
-              alert('Fetch returned status: ' + res.status);
-              return;
-            }
+            alert('starting fetch to: ' + SCRIPT_URL);
+            const res = await fetch(SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: uid, realName: name })
+            });
+
+            alert('fetch done, status: ' + res.status);
+            if (!res.ok) return alert('Fetch status not OK: ' + res.status);
 
             await liff.sendMessages([
               { type: 'text', text: `Thanks ${name}, your name is saved.` }
@@ -85,7 +84,7 @@
           }
         });
       })
-      .catch(err => alert('LIFF init failed: ' + err.message));
+      .catch((err) => alert('LIFF init failed: ' + err.message));
   </script>
 </body>
 </html>
