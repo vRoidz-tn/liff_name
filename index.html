@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Set Real Name</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    input { padding: 0.5rem; width: 250px; }
+    button { padding: 0.5rem 1rem; margin-left: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h3>Please enter your real name</h3>
+  <input id="realName" placeholder="Type your name">
+  <button id="sendBtn">Save</button>
+
+  <script>
+    async function main() {
+      // 1) Initialize LIFF
+      await liff.init({ liffId: '2007795446-X0L5VqbV' });
+
+      // 2) Get user profile from LINE
+      const profile = await liff.getProfile();
+      const uid = profile.userId;
+
+      // 3) Wait for button click
+      document.getElementById('sendBtn').addEventListener('click', async () => {
+        const name = document.getElementById('realName').value.trim();
+        if (!name) return alert('Enter a name');
+
+        // 4) Send data to your Apps Script web app
+        await fetch('https://script.google.com/macros/s/AKfycbynanz1oklVlKmxXj-4y5mVWe7NrmT9qWFZacU5s_XbqPid6-VbZo98exFl-v6xdgtngg/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uid, realName: name })
+        });
+
+        // 5) Confirm in chat and close LIFF
+        await liff.sendMessages([
+          { type: 'text', text: `Thanks ${name}, your name is saved.` }
+        ]);
+        liff.closeWindow();
+      });
+    }
+    main();
+  </script>
+</body>
+</html>
