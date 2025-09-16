@@ -1,0 +1,32 @@
+<script>
+liff
+  .init({ liffId: '2007795446-oDnMBb5B' })
+  .then(async () => {
+    alert('init ok');
+    const profile = await liff.getProfile().catch(err => alert('getProfile error: ' + err.message));
+    if (!profile) return;
+
+    alert('profile ok: ' + profile.displayName);
+    const uid = profile.userId;
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      alert('button clicked');
+      const name = document.getElementById('realName').value.trim();
+      if (!name) return alert('Enter a name');
+
+      try {
+        await fetch('https://script.google.com/macros/s/AKfycbynanz1oklVlKmxXj-4y5mVWe7NrmT9qWFZacU5s_XbqPid6-VbZo98exFl-v6xdgtngg/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uid, realName: name })
+        });
+
+        await liff.sendMessages([{ type: 'text', text: `Thanks ${name}` }]);
+        liff.closeWindow();
+      } catch(e) {
+        alert('send error: ' + e.message);
+      }
+    });
+  })
+  .catch(e => alert('init error: ' + e.message));
+</script>
