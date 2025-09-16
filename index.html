@@ -5,35 +5,62 @@
   <title>Set Real Name</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 2rem; }
-    input { padding: 0.5rem; width: 250px; }
-    button { padding: 0.5rem 1rem; margin-left: 0.5rem; }
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f9f9f9;
+    }
+    .wrapper {
+      text-align: center;
+    }
+    h3 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    input {
+      padding: 1rem;
+      width: 350px;
+      font-size: 1.2rem;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      margin-left: 0.5rem;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h3>Please enter your real name</h3>
-  <input id="realName" placeholder="Type your name">
-  <button id="sendBtn">Save</button>
+  <div class="wrapper">
+    <h3>Please enter your real name</h3>
+    <input id="realName" placeholder="Type your name">
+    <button id="sendBtn">Save</button>
+  </div>
 
   <script>
     liff
-      .init({ liffId: '2007795446-oDnMBb5B' })   <!-- put your real LIFF ID -->
+      .init({ liffId: '2007795446-oDnMBb5B' })   // your real LIFF ID
       .then(async () => {
-        alert('init ok');
+        alert('LIFF init OK');
+
         const profile = await liff.getProfile()
           .catch(err => alert('getProfile error: ' + err.message));
         if (!profile) return;
 
-        alert('profile ok: ' + profile.displayName);
+        alert('Profile OK: ' + profile.displayName);
         const uid = profile.userId;
 
         document.getElementById('sendBtn').addEventListener('click', async () => {
-          alert('button clicked');
+          alert('Button clicked');
           const name = document.getElementById('realName').value.trim();
           if (!name) return alert('Enter a name');
 
           try {
-            await fetch(
+            const res = await fetch(
               'https://script.google.com/macros/s/AKfycbynanz1oklVlKmxXj-4y5mVWe7NrmT9qWFZacU5s_XbqPid6-VbZo98exFl-v6xdgtngg/exec',
               {
                 method: 'POST',
@@ -42,17 +69,22 @@
               }
             );
 
+            if (!res.ok) {
+              alert('Fetch returned status: ' + res.status);
+              return;
+            }
+
             await liff.sendMessages([
               { type: 'text', text: `Thanks ${name}, your name is saved.` }
             ]);
 
             liff.closeWindow();
-          } catch (e) {
-            alert('send error: ' + e.message);
+          } catch (err) {
+            alert('Error sending: ' + err.message);
           }
         });
       })
-      .catch(e => alert('init error: ' + e.message));
+      .catch(err => alert('LIFF init failed: ' + err.message));
   </script>
 </body>
 </html>
