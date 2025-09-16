@@ -60,6 +60,7 @@
           if (!name) return alert('Enter a name');
 
           try {
+            console.log('starting fetch');
             const res = await fetch(
               'https://script.google.com/macros/s/AKfycbztj4RXoGT8QW46v1KbAEVtGFAktu9558coxPHQsGT5WpDl6_rliWoqMV7krBy1M6ezkw/exec',
               {
@@ -68,7 +69,7 @@
                 body: JSON.stringify({ userId: uid, realName: name })
               }
             );
-
+            console.log('fetch done', res);
             if (!res.ok) {
               alert('Fetch returned status: ' + res.status);
               return;
